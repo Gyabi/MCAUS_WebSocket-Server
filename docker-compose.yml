@@ -1,0 +1,28 @@
+version: "3"
+
+services:
+  # FastAPI
+  server:
+    container_name: "fastapi-websocket-server"
+    build: 
+      context: ./server
+      dockerfile: Dockerfile
+    restart: always
+    tty: true
+    ports:
+      - 8000:8000
+    volumes:
+      - ./server:/usr/src/server
+
+  # client
+  client:
+    container_name: "fastapi-websocket-client"
+    build: 
+      context: ./client
+      dockerfile: Dockerfile
+    restart: always
+    tty: true
+    ports:
+      - 8001:8001
+    volumes:
+      - ./client:/usr/src/client

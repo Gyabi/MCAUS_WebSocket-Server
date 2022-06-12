@@ -1,0 +1,12 @@
+{
+	"name": "fastapi-websocket-client",
+	"dockerComposeFile" : [
+		"../../docker-compose.yml"
+	],
+	"service": "client",
+	"shutdownAction": "none",
+	"workspaceFolder": "/usr/src/client",
+	"extensions": [
+		"ms-python.python"
+	]
+}
