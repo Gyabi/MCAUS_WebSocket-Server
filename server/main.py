@@ -1,3 +1,4 @@
+# uvicorn main:app --reload --host 0.0.0.0 --port 8000
 import json
 from typing import Dict, List
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
@@ -5,14 +6,14 @@ import time
 
 # json構造
 # {
-#     "connection-message":True,
+#     "connection_message":True,
 #     "id":0,
-#     "position-x":0.0,
-#     "position-y":0.0,
-#     "position-z":0.0,
-#     "rotation-x":0.0,
-#     "rotation-y":0.0,
-#     "rotation-z":0.0
+#     "position_x":0.0,
+#     "position_y":0.0,
+#     "position_z":0.0,
+#     "rotation_x":0.0,
+#     "rotation_y":0.0,
+#     "rotation_z":0.0
 # }
 
 # FaskAPIオブジェクト作成
@@ -27,7 +28,7 @@ class ConnenctionManager:
     
     async def connect(self, websocket:WebSocket):
         await websocket.accept()
-        # 既に10件の接続があれば拒否
+        # # 既に10件の接続があれば拒否
         if len(self.object_ids.values()) == MAX_CONNECTION:
             await websocket.close()
 
@@ -42,11 +43,17 @@ class ConnenctionManager:
                 break
     
         send_data = {
-            "connection-message":True,
-            "id":self.object_ids[key]
+            "connection_message":True,
+            "id":self.object_ids[key],
+            "position_x":0.0,
+            "position_y":0.0,
+            "position_z":0.0,
+            "rotation_x":0.0,
+            "rotation_y":0.0,
+            "rotation_z":0.0
         }
         # id送信
-        # time.sleep(1)
+        time.sleep(1)
         await self.send_personal_json_message(send_data,websocket)
 
     def disconnect(self, websocket:WebSocket):
@@ -71,11 +78,17 @@ manager = ConnenctionManager()
 # WebSockets用のエンドポイント
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
+    print("connect!")
     await manager.connect(websocket)
     try:
         while True:
-            data = await websocket.receive_bytes()
-            data = json.loads(data)
+            # C#側のアクセス
+            data = await websocket.receive_json()
+
+            # python側のデバッグ
+            # data = await websocket.receive_bytes()
+            # data = json.loads(data)
+
             print(data)
             # await manager.send_personal_json_message({"responce":"true"}, websocket)
             await manager.broadcast_excluding_sender(data, websocket)
