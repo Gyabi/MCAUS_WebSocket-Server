@@ -1,5 +1,4 @@
 # uvicorn main:app --reload --host 0.0.0.0 --port 8000
-import json
 from typing import Dict, List
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 import time
@@ -7,6 +6,7 @@ import time
 # json構造
 # {
 #     "connection_message":True,
+#     "disconnection_message":False,
 #     "id":0,
 #     "position_x":0.0,
 #     "position_y":0.0,
@@ -44,6 +44,7 @@ class ConnenctionManager:
     
         send_data = {
             "connection_message":True,
+            "disconnection_message":False,
             "id":self.object_ids[key],
             "position_x":0.0,
             "position_y":0.0,
@@ -53,11 +54,29 @@ class ConnenctionManager:
             "rotation_z":0.0
         }
         # id送信
+        # todo:瞬時に返却するとunityのawake終了前に帰る可能性があるので1s止める
         time.sleep(1)
         await self.send_personal_json_message(send_data,websocket)
 
-    def disconnect(self, websocket:WebSocket):
+        print("connection"+str(self.object_ids[key]))
+
+    async def disconnect(self, websocket:WebSocket):
         key = websocket.headers.get('sec-websocket-key')
+
+        send_data = {
+            "connection_message":False,
+            "disconnection_message":True,
+            "id":self.object_ids[key],
+            "position_x":0.0,
+            "position_y":0.0,
+            "position_z":0.0,
+            "rotation_x":0.0,
+            "rotation_y":0.0,
+            "rotation_z":0.0
+        }
+        await self.broadcast_excluding_sender(send_data, websocket)
+        print("disconnection"+str(self.object_ids[key]))
+
         del self.active_connections[key]
         del self.object_ids[key]
     
@@ -89,8 +108,7 @@ async def websocket_endpoint(websocket: WebSocket):
             # data = await websocket.receive_bytes()
             # data = json.loads(data)
 
-            print(data)
-            # await manager.send_personal_json_message({"responce":"true"}, websocket)
+            # print(data)
             await manager.broadcast_excluding_sender(data, websocket)
     except WebSocketDisconnect:
-        manager.disconnect(websocket)
+         await manager.disconnect(websocket)
